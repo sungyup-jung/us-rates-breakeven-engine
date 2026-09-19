@@ -1,0 +1,26 @@
+Ini, TOML
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rates_engine"
+version = "0.1.0"
+description = "Institutional U.S. Rates & Breakeven Inflation Term Stucture Analytics Engine"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Quantitative Research Desk"}
+]
+dependencies = [
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scipy>=1.10.0",
+    "plotly>=5.15.0",
+    "ipython>=8.12.0",
+]
+
+[tool.setuptools.package.find]
+where = ["."]
+include = ["rates_egnine*"]
