@@ -16,18 +16,24 @@ class FREDMarketDataLoader:
     NOMINAL_SERIES = {
         2.0: "DGS2", 3.0: "DGS3", 5.0: "DGS5", 7.0: "DGS7", 
         10.0: "DGS10", 20.0: "DGS20", 30.0: "DGS30",
-        }
+    }
 
     TIPS_SERIES = {5.0: "DFII5", 7.0: "DFII7", 10.0: "DFII10", 20.0: "DFII20", 30.0: "DFII30",}
 
     SURVEY_CPI_SERIES = {
         2.0: "EXPINF2YR", 3.0: "EXPINF3YR", 5.0: "EXPINF5YR", 7.0: "EXPINF7YR", 
         10.0: "EXPINF10YR", 20.0: "EXPINF20YR", 30.0: "EXPINF30YR",
-        }
+    }
 
     BLS_CPI_SERIES = {"NSA": "CPIAUCNS", "SA": "CPIAUCSL"}
     FINANCIAL_STRESS_SERIES = "STLFSI4"
     REPO_SERIES = {"SOFR": "SOFR", "TGCR": "TGCR"}
+
+    @classmethod
+    def _fetch_csv(cls, series_id: str) -> pd.Series:
+        url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
+        df = pd.read_csv(url, index_col=0, parse_dates=True)
+        return pd.to_numeric(df[series_id], errors="coerce")
 
     @classmethod
     def fetch_latest_market_data(
@@ -37,7 +43,7 @@ class FREDMarketDataLoader:
                np.ndarray, pd.Series, pd.Series,
                pd.Series, pd.Series, pd.Series,
                float, float, float, str,
-               ]:
+    ]:
         """Fetches latest cross-section and rolling historical time series."""
         print("[INFO] Ingesting FRED market rates, survey CPI, and financing parameters...")
 
@@ -68,7 +74,7 @@ class FREDMarketDataLoader:
         cpi_df = pd.DataFrame({"NSA": cpi_nsa, "SA": cpi_sa}).dropna()
         cpi_df["Ratio"] = cpi_df["NSA"] / cpi_df["SA"]
         cpi_df["Month"] = cpi_df.index.month
-        trailing_5y = cpi_df[cpi_df.index >= (cpi_df.index[-1] - pd.DataOffset(years=5))]
+        trailing_5y = cpi_df[cpi_df.index >= (cpi_df.index[-1] - pd.DateOffset(years=5))]
         monthly_medians = trailing_5y.groupby("Month")["Ratio"].median().values
         normalized_seasonal_factors = monthly_medians * (12.0 / np.sum(monthly_medians))
 
@@ -105,7 +111,7 @@ class FREDMarketDataLoader:
             survey_maturities,
             survey_cpi_exp,
             normalized_seasonal_factors,
-            now_10y_series,
+            nom_10y_series,
             tips_10y_series,
             nom_30y_series,
             tips_30y_series,

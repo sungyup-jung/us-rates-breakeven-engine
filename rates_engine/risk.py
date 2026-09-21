@@ -107,7 +107,7 @@ class HistoricalMarketRiskEngine:
         simulated_pnls = []
 
         for _, row in df.iterrows():
-            shift_n_bps = row["dNoms"] * 100.0 * scale
+            shift_n_bps = row["dNom"] * 100.0 * scale
             shift_r_bps = row["dTIPS"] * 100.0 * scale
             res = pricer.evaluate_horizon_pnl(shift_n_bps, shift_r_bps, dt_years=holding_period_days / 365.25)
             simulated_pnls.append(res["Total_Horizon_PnL_USD"])

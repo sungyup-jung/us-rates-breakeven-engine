@@ -221,6 +221,7 @@ def render_rates_inflation_dashboard(
     tips_curve: YieldCurve,
     pricer_10y: BreakevenTradePricer,
     settlement_date: str,
+    save_png_path: str = "rates_dashboard.png"
 ):
     """Renders the 6-panel executive institutional dashboard via Plotly."""
     tenor_labels = [f"{int(m)}Y" for m in df["Maturity_Years"]]
@@ -438,39 +439,9 @@ def render_rates_inflation_dashboard(
     gamma_pnls = [pricer_10y.evaluate_horizon_pnl(s[1], s[2])["Convexity_Gamma_PnL_USD"] for s in scenarios]
     carry_pnls = [pricer_10y.evaluate_horizon_pnl(s[1], s[2])["RollDown_PnL_USD"] + pricer_10y.evaluate_horizon_pnl(s[1], s[2])["Repo_Carry_PnL_USD"] for s in scenarios]
 
-    fig.add_trace(
-        go.Bar(
-            x=sc_names,
-            y=delta_pnls,
-            name="Delta PnL ($)",
-            marker_color=c_blue,
-            legend="legend6",
-        ),
-        row=3,
-        col=2,
-    )
-    fig.add_trace(
-        go.Bar(
-            x=sc_names,
-            y=gamma_pnls,
-            name="Gamma PnL ($)",
-            marker_color=c_green,
-            legend="legend6",
-        ),
-        row=3,
-        col=2,
-    )
-    fig.add_trace(
-        go.Bar(
-            x=sc_names,
-            y=carry_pnls,
-            name="Net Carry/Roll ($)",
-            marker_color=c_amber,
-            legend="legend6",
-        ),
-        row=3,
-        col=2,
-    )
+    fig.add_trace(go.Bar(x=sc_names, y=delta_pnls, name="Delta PnL ($)", marker_color=c_blue, legend="legend6",), row=3, col=2,)
+    fig.add_trace(go.Bar(x=sc_names, y=gamma_pnls, name="Gamma PnL ($)", marker_color=c_green, legend="legend6",), row=3, col=2,)
+    fig.add_trace(go.Bar(x=sc_names, y=carry_pnls, name="Net Carry/Roll ($)", marker_color=c_amber, legend="legend6",), row=3, col=2,)
 
     # Axis Labels & Titles
     fig.update_xaxes(title_text="Maturity Tenor", row=1, col=1)
@@ -491,73 +462,31 @@ def render_rates_inflation_dashboard(
         title=dict(
             text=f"<b>U.S. Rates Analytics Dashboard</b> | FRED Settlement: {settlement_date}",
             font=dict(size=18),
-            x=0.01,
+            x=0.5,
             y=0.99,
-            xanchor="left",
+            xanchor="center",
             yanchor="top",
         ),
         barmode="relative",
-        margin=dict(t=80, b=50, l=70, r=40),
-        height=1450,
-        width=1350,
-        template="plotly_white",
-        legend=dict(
-            orientation="h",
-            x=0.01,
-            y=0.98,
-            xanchor="left",
-            yanchor="top",
-            font=dict(size=10),
-            bgcolor="rgba(255,255,255,0.7)",
-        ),
-        legend2=dict(
-            orientation="h",
-            x=0.55,
-            y=0.98,
-            xanchor="left",
-            yanchor="top",
-            font=dict(size=10),
-            bgcolor="rgba(255,255,255,0.7)",
-        ),
-        legend3=dict(
-            orientation="h",
-            x=0.01,
-            y=0.64,
-            xanchor="left",
-            yanchor="top",
-            font=dict(size=10),
-            bgcolor="rgba(255,255,255,0.7)",
-        ),
-        legend4=dict(
-            orientation="h",
-            x=0.55,
-            y=0.64,
-            xanchor="left",
-            yanchor="top",
-            font=dict(size=10),
-            bgcolor="rgba(255,255,255,0.7)",
-        ),
-        legend5=dict(
-            orientation="h",
-            x=0.01,
-            y=0.30,
-            xanchor="left",
-            yanchor="top",
-            font=dict(size=10),
-            bgcolor="rgba(255,255,255,0.7)",
-        ),
-        legend6=dict(
-            orientation="h",
-            x=0.55,
-            y=0.30,
-            xanchor="left",
-            yanchor="top",
-            font=dict(size=10),
-            bgcolor="rgba(255,255,255,0.7)",
-        ),
+        margin=dict(t=100, b=60, l=80, r=50),
+        height=1350,
+        width=1650,
+        template="plotly_dark",
+        legend=dict(orientation="h", x=0.01, y=1.02, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
+        legend2=dict(orientation="h", x=0.52, y=1.02, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
+        legend3=dict(orientation="h", x=0.01, y=0.68, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
+        legend4=dict(orientation="h", x=0.52, y=0.68, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
+        legend5=dict(orientation="h", x=0.01, y=0.34, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
+        legend6=dict(orientation="h", x=0.52, y=0.34, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
     )
 
-    fig.show()
+    try:
+        fig.write_image(save_png_path, scale=2)
+        print(f"[SUCCES] Exported dashboard PNG to: {save_png_path}")
+    except Exception as e:
+        print(f"[WARNING] Kaleido export failed: {e}")
+
+    return fig
 
 
 class MarkdownReportGenerator:
@@ -633,7 +562,10 @@ class MarkdownReportGenerator:
             )
         )
 
-        md = f"""## 4. Research Note
+        md = f"""## 4. U.S. Rates & Breakeven Inflation Research Note
+**Settlement Date:** {settle_date} | **Model:** Diebold-Li (2006) Basis Invariance + DKW (2018)
+
+![Term Structure Dashboard](rates_dashboard.png)
 
 ### Executive Summary
 Quantitative term structure and relative-value breakeven analytics for settlement date **{formatted_date}**:
