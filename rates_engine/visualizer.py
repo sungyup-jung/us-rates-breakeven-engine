@@ -1,12 +1,12 @@
 """
 Plotly visualization, dynamic conditioned reporting, and SR 11-7 narrative generator.
 """
-
-from typing import Dict
+import os
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from typing import Dict
 
 from .curves import YieldCurve
 from .frictions import DKWEconometricPriors
@@ -653,7 +653,9 @@ $$\\text{{Position}} = \\text{{Long 10Y Box (+USD 100M)}} + \\text{{Short 30Y Bo
 | **Leg 2** | Long 30Y TIPS | {curve_box_30y['Leg2_Long_TIPS_30Y_USD']:,.2f} | +{curve_box_30y['Matched_DV01_USD']:,.2f} | $\\beta_{{30\\text{{Y}}}} = {exec_params['Beta_TIPS_30Y']:.3f}$ |
 | **Portfolio** | **Net Structure** | — | **0.00** | **Strictly Curve-Neutral** |
 """
+        if export_filename:
+            with open(export_filename, "w", encoding="utf-8") as f:
+                f.write(md)
+            print(f"[SUCCESS] Saved Markdown report to: {os.path.abspath(export_filename)}")
 
-        with open(export_filename, "w", encoding="utf-8") as f:
-            f.write(md)
         return md
