@@ -1,7 +1,6 @@
 """
 Plotly visualization, dynamic conditioned reporting, and SR 11-7 narrative generator.
 """
-import os
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -461,27 +460,35 @@ def render_rates_inflation_dashboard(
     fig.update_layout(
         title=dict(
             text=f"<b>U.S. Rates Analytics Dashboard</b> | FRED Settlement: {settlement_date}",
-            font=dict(size=18),
+            font=dict(size=20, color='#F8FAFC'),
             x=0.5,
-            y=0.99,
+            y=0.985,
             xanchor="center",
             yanchor="top",
         ),
         barmode="relative",
-        margin=dict(t=100, b=60, l=80, r=50),
-        height=1350,
-        width=1650,
+        height=1400,
+        width=1800,
         template="plotly_dark",
-        legend=dict(orientation="h", x=0.01, y=1.02, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
-        legend2=dict(orientation="h", x=0.52, y=1.02, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
-        legend3=dict(orientation="h", x=0.01, y=0.68, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
-        legend4=dict(orientation="h", x=0.52, y=0.68, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
-        legend5=dict(orientation="h", x=0.01, y=0.34, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
-        legend6=dict(orientation="h", x=0.52, y=0.34, xanchor="left", yanchor="top", font=dict(size=9), bgcolor="rgba(0,0,0,0)"),
+        margin=dict(t=120, b=70, l=90, r=60),
+        legend=dict(orientation="h", x=0.46, y=0.965, xanchor="right", yanchor="top", font=dict(size=10), bgcolor="rgba(15,23,42,0.80)", bordercolor="rgba(148,163,184,0.25)", borderwidth=1,),
+        legend2=dict(orientation="h", x=0.98, y=0.965, xanchor="right", yanchor="top", font=dict(size=10), bgcolor="rgba(15,23,42,0.80)", bordercolor="rgba(148,163,184,0.25)", borderwidth=1,),
+        legend3=dict(orientation="h", x=0.03, y=0.615, xanchor="left", yanchor="top", font=dict(size=10), bgcolor="rgba(15,23,42,0.80)", bordercolor="rgba(148,163,184,0.25)", borderwidth=1,),
+        legend4=dict(orientation="h", x=0.55, y=0.615, xanchor="left", yanchor="top", font=dict(size=10), bgcolor="rgba(15,23,42,0.80)", bordercolor="rgba(148,163,184,0.25)", borderwidth=1,),
+        legend5=dict(orientation="h", x=0.03, y=0.275, xanchor="left", yanchor="top", font=dict(size=10), bgcolor="rgba(15,23,42,0.80)", bordercolor="rgba(148,163,184,0.25)", borderwidth=1,),
+        legend6=dict(orientation="h", x=0.55, y=0.275, xanchor="left", yanchor="top", font=dict(size=10), bgcolor="rgba(15,23,42,0.80)", bordercolor="rgba(148,163,184,0.25)", borderwidth=1,),
     )
 
+    # Nudge the subplot title annotations up by 15px so they never touch any axis line or legend
+    for annot in fig["layout"]["annotations"]:
+        if annot["text"] != fig.layout.title.text:
+            annot["yshift"] = 24
+            annot["font"] = dict(size=13, color="#E2E8F0", family="Arial Black, sans-serif")
+
+    # Export using scale=1 to preserve exact pixel proportions
+
     try:
-        fig.write_image(save_png_path, scale=2)
+        fig.write_image(save_png_path, width=1800, height=1400, scale=1)
         print(f"[SUCCES] Exported dashboard PNG to: {save_png_path}")
     except Exception as e:
         print(f"[WARNING] Kaleido export failed: {e}")
@@ -563,11 +570,11 @@ class MarkdownReportGenerator:
         )
 
         md = f"""## 4. U.S. Rates & Breakeven Inflation Research Note
-**Settlement Date:** {settle_date} | **Model:** Diebold-Li (2006) Basis Invariance + DKW (2018)
+**Settlement Date:** {settle_date} | **Model:** Dual Nelson-Siegel Decomposition (D'Amico, Kim, and Wei (2018) Structural Accounting Framework)
 
 ![Term Structure Dashboard](rates_dashboard.png)
 
-### Executive Summary
+### 1. Executive Summary
 Quantitative term structure and relative-value breakeven analytics for settlement date **{formatted_date}**:
 
 * **Spot Breakeven Term Structure**:
@@ -581,19 +588,27 @@ Quantitative term structure and relative-value breakeven analytics for settlemen
 
 ---
 
-### Econometric Diagnostics & Model Validation (SR 11-7)
+### 2. Econometric Diagnostics & Model Validation (SR 11-7)
 
+#### 2.1 Statistical Goodness-of-Fit & Calibration
 1. **Model Selection (BIC)**: Nominal $\\text{{BIC}}_{{\\text{{NS}}}} = {bic_selection['NS_BIC']:.2f}$ vs. $\\text{{BIC}}_{{\\text{{NSS}}}} = {bic_selection['NSS_BIC']:.2f}$. Selected: **{bic_selection['Selected_Model']}**.
 2. **Diebold-Li (2006) Parameter Invariance**:
    * Structural decay constant: $\\tau_1 = {nom_curve.tau1:.4f}$ (centering the empirical curvature hump at $\\tau^* = 4.0\\text{{ years}}$).
-   * Estimation: Exact closed-form Weighted Least Squares (WOLS) with zero non-linear optimization risk.
-3. **DKW (2018) Liquidity Calibration**:
+   * Estimation: Exact closed-form Weighted Least Squares (WLS) with zero non-linear optimization risk.
+3. **DKW (2018) Structural Liquidity Calibration**:
    * Base front-end wedge: {DKWEconometricPriors.BASE_FRONT_END_BPS:.2f} bps (decay half-life: {DKWEconometricPriors.DECAY_HORIZON_YEARS:.1f} yrs; floor: {DKWEconometricPriors.TERMINAL_FLOOR_BPS:.2f} bps).
    * Stress scalar sensitivity: $\\gamma = {DKWEconometricPriors.STRESS_SENSITIVITY:.2f}$ scaled against STLFSI4.
-4. **Matrix Stability**: Nominal basis condition number $\\kappa = {nom_diag['Basis_Condition_Number']:.2f}$; TIPS $\\kappa = {tips_diag['Basis_Condition_Number']:.2f}$ (well below the 30.0 threshold).
+4. **Numerical Stability**: Nominal basis condition number $\\kappa = {nom_diag['Basis_Condition_Number']:.2f}$; TIPS $\\kappa = {tips_diag['Basis_Condition_Number']:.2f}$ (well below the 30.0 threshold).
 5. **Residual Precision**: Nominal RMSE = {nom_diag['RMSE_Bps']:.3f} bps; TIPS RMSE = {tips_diag['RMSE_Bps']:.3f} bps.
-6. **Reference CPI**: Daily interpolated Ref CPI = {exec_params['Current_Ref_CPI']:.4f} ($CIF = {exec_params['CIF']:.4f}$).
+6. **Reference Indexation**: Daily interpolated Ref CPI = {exec_params['Current_Ref_CPI']:.4f} ($CIF = {exec_params['CIF']:.4f}$).
 
+#### 2.2 Model Governance, Assumptions & Operational Limitations
+* **Model Classification**: Tier 2 Quantitative Valuation & Relative Value Engine.
+* **Functional Form**: Term structures are interpolated via the Nelson-Siegel (Diebold-Li 2006) 3-factor exponential basis.  Decomposition applies the D'Amico, Kim, and Wei accounting identity
+calibrated via observable market liquidity proxies rather than the continuous-time 52-parameter affine Kalman filter.
+* **Boundary Conditions & Compensating Controls**:
+    1. *Asymptotic Flatness*: Unconstrained exponential splines can theoretically exhibit pricing drift at extreme horizons ($>30\\text{{Y}}$); controlled via BIC penalty and strictly positive yield constraints.
+    2. *Regime Shifts*: Liquidity wedge parameters assume normal market conditions; under tail systemic crises, manually swap out the default liquidity estimates for real-time market spreads.
 ---
 
 {dynamic_interpretations}
@@ -653,9 +668,8 @@ $$\\text{{Position}} = \\text{{Long 10Y Box (+USD 100M)}} + \\text{{Short 30Y Bo
 | **Leg 2** | Long 30Y TIPS | {curve_box_30y['Leg2_Long_TIPS_30Y_USD']:,.2f} | +{curve_box_30y['Matched_DV01_USD']:,.2f} | $\\beta_{{30\\text{{Y}}}} = {exec_params['Beta_TIPS_30Y']:.3f}$ |
 | **Portfolio** | **Net Structure** | — | **0.00** | **Strictly Curve-Neutral** |
 """
-        if export_filename:
-            with open(export_filename, "w", encoding="utf-8") as f:
-                f.write(md)
-            print(f"[SUCCESS] Saved Markdown report to: {os.path.abspath(export_filename)}")
+
+        with open(export_filename, "w", encoding="utf-8") as f:
+            f.write(md)
 
         return md
