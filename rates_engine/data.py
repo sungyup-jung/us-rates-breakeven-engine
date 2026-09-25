@@ -29,11 +29,34 @@ class FREDMarketDataLoader:
     FINANCIAL_STRESS_SERIES = "STLFSI4"
     REPO_SERIES = {"SOFR": "SOFR", "TGCR": "TGCR"}
 
+    # Macro regime time-series: 5y5y Forward Breakeven & 10Y TIPS Yield
+    MACRO_REGIME_SERIES = {
+        "T5YIFR": "T5YIFR",     # 5-Year, 5-Year Forward Inflation Expectation Rate
+        "DFII10": "DFII10",     # 10-Year TIPS Real Yield
+        "DGS10": "DGS10",       # 10-Year Constant Maturity Nominal Treasury Yield 
+    }
+
     @classmethod
     def _fetch_csv(cls, series_id: str) -> pd.Series:
         url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
         df = pd.read_csv(url, index_col=0, parse_dates=True)
         return pd.to_numeric(df[series_id], errors="coerce")
+
+    @classmethod
+    def fetch_historical_macro_regime(cls, start_date: str = "2021-01-01") -> pd.DataFrame:
+        """
+        Fetches historical 5y5y forward breakeven inflation (T5YIFR),
+        10-Year TIPS real yield (DFII10), and 10-Year Nominal yield (DGS10) from FRED starting from `start_date`.
+        """
+        print(f"[INFO] Ingesting historical macro regime series (T5YIFR, DFII10, DGS10) from {start_date}...")
+        series_dict = {
+            col: cls._fetch_csv(sid).rename(col)
+            for col, sid in cls.MACRO_REGIME_SERIES.items()
+        }
+        df_macro = pd.concat(list(series_dict.values()), axis=1).dropna()
+        df_macro = df_macro[df_macro.index >= pd.to_datetime(start_date)]
+        print(f"[SUCCESS] Ingested {len(df_macro)} daily macro regime observations.")
+        return df_macro
 
     @classmethod
     def fetch_latest_market_data(

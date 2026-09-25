@@ -495,6 +495,100 @@ def render_rates_inflation_dashboard(
 
     return fig
 
+def render_macro_regime_history(
+        df_ts: pd.DataFrame,
+        save_png_path: str = "macro_regime_timeseries.png"
+) -> go.Figure:
+    """
+    Renders a dual-axis time series comparing 5y5y Forward Breakeven Inflation
+    against 10-Year TIPS Real Yields
+    """
+    fig = make_subplots(specs = [[{"secondary_y": True}]])
+
+    # 1. 5y5y Forward Breakeven (Left Axis)
+    fig.add_trace(
+        go.Scatter(
+            x=df_ts.index,
+            y=df_ts['T5YIFR'],
+            name="5y/5y Forward Breakeven (ls)",
+            line=dict(color="#38BDF8", width=2.0),
+        ),
+        secondary_y=False,
+    )
+
+    # 2. 10Y Nominal Treasury Yield (Right Axis)
+    fig.add_trace(
+        go.Scatter(
+            x=df_ts.index,
+            y=df_ts["DGS10"],
+            name="10-Year Nominal Yield (rs)",
+            line=dict(color="#FBBF24", width=2.0),
+        ),
+        secondary_y=True
+    )
+
+    # 3. 10Y TIPS Real Yield (Right Axis)
+    fig.add_trace(
+        go.Scatter(
+            x=df_ts.index,
+            y=df_ts["DFII10"],
+            name="10-Year TIPS Yield (rs)",
+            line=dict(color="#F87171", width=2.0),
+        )
+    )
+
+    fig.update_layout(
+        title=dict(
+            text="<b>U.S. Macro Regime: Nominal & Real Rate vs. Forward Breakeven Anchoring</b>",
+            font=dict(size=17, color="#F8FAFC"),
+            x=0.05,
+            y=0.95,
+            xanchor="left",
+        ),
+        template="plotly_dark",
+        height=650,
+        width=1100,
+        margin=dict(t=80, b=60, l=60, r=60),
+        legend=dict(
+            orientation="h",
+            x=0.05,
+            y=0.88,
+            xanchor="left",
+            font=dict(size=11),
+            bgcolor="rgba(15, 23, 42, 0.8)",
+            bordercolor="rgba(148, 163, 184, 0.2)",
+            borderwidth=1,
+        ),
+        hovermode="x unified",
+    )
+
+    fig.update_yaxes(
+        title_text="5y5y Forward Breakeven (%)",
+        secondary_y=False,
+        showgrid=True,
+        gridcolor="rgba(148, 163, 184, 0.15)",
+        tickformat=".2f",
+    )
+    fig.update_yaxes(
+        title_text="10Y Nominal & TIPS Real Yield (%)",
+        secondary_y=True,
+        showgrid=False,
+        tickformat=".2f",
+    )
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor="rgba(148, 163, 184, 0.15)",
+        title_text="Observation Date",
+    )
+
+    try:
+        fig.write_image(save_png_path, width=1100, height=650, scale=1)
+        print(f"[SUCCESS] Exported macro time series to: {save_png_path}")
+    except Exception as e:
+        print(f"[WARNING] Image export failed: {e}")
+
+    return fig
+
 
 class MarkdownReportGenerator:
     """Generates an institutional research note and trade execution report."""
@@ -513,12 +607,47 @@ class MarkdownReportGenerator:
         pricer_10y: BreakevenTradePricer,
         curve_box_30y: dict,
         settle_date: str,
+        df_macro_ts: pd.DataFrame = None,
         export_filename: str = "TERM_STRUCTURE_ANALYTICS_OUTPUT.md",
     ) -> str:
         dt_obj = pd.to_datetime(settle_date)
         formatted_date = dt_obj.strftime("%B %d, %Y")
         month_name = dt_obj.strftime("%B")
 
+        # -----------------------------------------------------------
+        # 1. Dynamic Macro Regime Calculation
+        # ------------------------------------------------------------
+        
+        # Dynamic macro metrics computed if time-series is passed
+        if df_macro_ts is not None and not df_macro_ts.empty:
+            ts_start_yr = df_macro_ts.index[0].year
+            ts_end_yr = df_macro_ts.index[-1].year
+
+            # Nominal 10Y
+            has_nom = "DGS10" in df_macro_ts.columns
+            nom_start = float(df_macro_ts["DGS10"].iloc[0]) if has_nom else 0.0
+            nom_latest = float(df_macro_ts["DGS10"].iloc[-1]) if has_nom else 0.0
+            nom_chg_bps = (nom_latest - nom_start) * 100.0 if has_nom else 0.0 
+
+            # TIPS 10Y Real
+            tips_start = float(df_macro_ts["DFII10"].iloc[0])
+            tips_latest = float(df_macro_ts["DFII10"].iloc[-1])
+            tips_min = float(df_macro_ts["DFII10"].min())
+            tips_max = float(df_macro_ts["DFII10"].max())
+            tips_chg_bps = (tips_latest - tips_start) * 100.0
+
+            # 5y5y Forward BEI
+            fwd_min = float(df_macro_ts["T5YIFR"].min())
+            fwd_max = float(df_macro_ts["T5YIFR"].max())
+            fwd_latest = float(df_macro_ts["T5YIFR"].iloc[-1])
+        else:
+            ts_start_yr, ts_end_yr = 0.0, 0.0
+            nom_start, nom_latest, tips_start, tips_latest, tips_min, tips_max, tips_chg_bps = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+            fwd_min, fwd_max, fwd_latest = 0.0, 0.0, 0.0
+
+        # ---------------------------------------------------------------
+        # 2. Cross-Sectional Curve Points & Slopes
+        # ---------------------------------------------------------------
         row_2y = df_decomp[df_decomp["Maturity_Years"] == 2.0].iloc[0]
         row_5y = df_decomp[df_decomp["Maturity_Years"] == 5.0].iloc[0]
         row_10y = df_decomp[df_decomp["Maturity_Years"] == 10.0].iloc[0]
@@ -569,14 +698,24 @@ class MarkdownReportGenerator:
             )
         )
 
-        md = f"""## 4. U.S. Rates & Breakeven Inflation Research Note
+        # ---------------------------------------------------------------
+        # 3. Assemble Markdown Report
+        # ---------------------------------------------------------------
+        md = f"""## U.S. RATES & BREAKEVEN INFLATION RESEARCH NOTE
 **Settlement Date:** {settle_date} | **Model:** Dual Nelson-Siegel Decomposition (D'Amico, Kim, and Wei (2018) Structural Accounting Framework)
 
 ![Term Structure Dashboard](rates_dashboard.png)
 
-### 1. Executive Summary
-Quantitative term structure and relative-value breakeven analytics for settlement date **{formatted_date}**:
+### 1. Executive Summary & Market Context
 
+#### 1.1 Macro Regime Surveillance ({ts_start_yr} - {ts_end_yr})
+
+![Macro Regime Time Series](macro_regime_timeseries.png)
+
+* **10Y Rate Trajectory**: 10Y Nominal yields moved from {nom_start:.2f}% to {nom_latest:.2f}% ({nom_chg_bps:+.0f} bps), while 10Y TIPS real yields shifted from {tips_start:.2f}% to {tips_latest:.2f}% ({tips_chg_bps:+.0f} bps net: historical range [{tips_min:.2f}%, {tips_max:.2f}%]).
+* **Forward Expectation Anchoring**: 5y5y forward breakevens traded in a {fwd_min:.2f}%-{fwd_max:.2f}% corridor (latest: {fwd_latest:.2f}%).
+
+#### 1.2 Spot Breakeven Term Structure ({formatted_date})
 * **Spot Breakeven Term Structure**:
   * **2Y Spot BEI**: Trades at {row_2y['Unadjusted_BEI_Bps']:.2f} bps ({row_2y['Nominal_Zero_Pct']:.3f}% Nominal vs. {row_2y['TIPS_Zero_Pct']:.3f}% TIPS).
   * **Seasonality Adjustment**: Dynamic 5-year BLS factor for {month_name} adjusts 2Y SA breakeven to {row_2y['SA_BEI_Bps']:.2f} bps ({seasonal_wedge_2y:+.2f} bps wedge).
