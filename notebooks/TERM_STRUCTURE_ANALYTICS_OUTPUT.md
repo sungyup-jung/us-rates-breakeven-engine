@@ -33,7 +33,7 @@
 3. **DKW (2018) Structural Liquidity Calibration**:
    * Base front-end wedge: 6.50 bps (decay half-life: 5.0 yrs; floor: 1.50 bps).
    * Stress scalar sensitivity: $\gamma = 0.25$ scaled against STLFSI4.
-4. **Numerical Stability**: Nominal basis condition number $\kappa = 23.73$; TIPS $\kappa = 82.25$ (well below the 30.0 threshold).
+4. **Numerical Stability**: Nominal basis condition number $\kappa = 23.73$; TIPS $\kappa = 82.25$.
 5. **Residual Precision**: Nominal RMSE = 6.083 bps; TIPS RMSE = 1.631 bps.
 6. **Reference Indexation**: Daily interpolated Ref CPI = 333.9259 ($CIF = 1.0307$).
 
