@@ -1,7 +1,6 @@
 ## U.S. RATES & BREAKEVEN INFLATION RESEARCH NOTE
 **Settlement Date:** 2026-09-24 | **Model:** Dual Nelson-Siegel Decomposition (D'Amico, Kim, and Wei (2018) Structural Accounting Framework)
 
-![Term Structure Dashboard](rates_dashboard.png)
 
 ### 1. Executive Summary & Market Context
 
@@ -47,9 +46,9 @@ calibrated via observable market liquidity proxies rather than the continuous-ti
     2. *Regime Shifts*: Liquidity wedge parameters assume normal market conditions; under tail systemic crises, manually swap out the default liquidity estimates for real-time market spreads.
 ---
 
-### 4.6 Quantitative Dashboard Figure Interpretation
+### 3. Quantitative Dashboard Figure Interpretation
 
-* **Figure 1 (Zero Yield Term Structure & Macro Stance)**: The nominal curve trades **upward-sloping (steep)** (2s10s spread: **+31.4 bps**, spanning 4.91% to 5.45%), while the real TIPS curve exhibits a 2s10s slope of **-11.4 bps** (2.98% to 3.19%). Real yields are firmly restrictive across all tenors (trough at **2.71%**), confirming that policy rates ($r > r^*$) maintain high hurdle rates across risk assets. Ten-year real rates are anchoring at an elevated **2.86%**, discounting post-GFC secular stagnation.
+* **Figure 1 (Zero Yield Term Structure & Macro Stance)**: The nominal curve trades **upward-sloping (steep)** (2s10s spread: **+31.4 bps**, spanning 4.91% to 5.22%), while the real TIPS curve exhibits a 2s10s slope of **-11.4 bps** (2.98% to 2.86%). Real yields are firmly restrictive across all tenors (trough at **2.71%**), confirming that policy rates ($r > r^*$) maintain high hurdle rates across risk assets. Ten-year real rates are anchoring at an elevated **2.86%**, discounting post-GFC secular stagnation.
 
 * **Figure 2 (Spot BEI Breakdown & Market Frictions)**: Seasonally adjusted spot breakevens span **184.6 to 234.1 bps**. At the 10Y tenor, consensus survey CPI sits **23.1 bps above** market-implied pricing. The DKW-calibrated liquidity wedge imposes a **6.0 bps penalty at 2Y**, decaying asymptotically to **1.6 bps at 30Y**.
 
@@ -61,12 +60,12 @@ calibrated via observable market liquidity proxies rather than the continuous-ti
 
 * **Figure 6 (90-Day PnL Attribution Across Macro Scenarios)**: Across stress regimes, maximum upside occurs under **OIL-05 (+USD 2,652,600.99)**, while maximum loss occurs under **OIL-06 (-USD 2,517,972.07)**. Regulatory 10-day 99% Historical VaR evaluates to **USD 1,341,184.26** (Expected Shortfall: **USD 1,533,377.19**), demonstrating capital adequacy under FRTB stress.
 
-
+![Term Structure Dashboard](rates_dashboard.png)
 ---
 
-## 5. Trade Sizing, Risk Sensitivity & Execution
+## 4. Trade Sizing, Risk Sensitivity & Execution
 
-### 5.1 Dynamic Trade Sizing (10Y Benchmark Box)
+### 4.1 Dynamic Trade Sizing (10Y Benchmark Box)
 $$\text{Position} = \text{Long USD 100M Par 10Y Nominal} + \text{Short 10Y TIPS}$$
 
 | Metric | Nominal Leg | TIPS Hedged Leg | Net / Status |
@@ -78,7 +77,7 @@ $$\text{Position} = \text{Long USD 100M Par 10Y Nominal} + \text{Short 10Y TIPS}
 
 ---
 
-### 5.2 Key Rate Duration (KRD) Bucket Decomposition (10Y Benchmark)
+### 4.2 Key Rate Duration (KRD) Bucket Decomposition (10Y Benchmark)
 
 | Key Tenor | 2Y Bucket | 5Y Bucket | 10Y Bucket | 30Y Bucket | Total Duration |
 | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -86,7 +85,7 @@ $$\text{Position} = \text{Long USD 100M Par 10Y Nominal} + \text{Short 10Y TIPS}
 
 ---
 
-### 5.3 Regulatory Market Risk (FRTB / Basel III Standards)
+### 4.3 Regulatory Market Risk (FRTB / Basel III Standards)
 
 * **10-Day 99% Historical Simulation VaR**: USD 1,341,184.26
 * **10-Day 99% Expected Shortfall (ES)**: USD 1,533,377.19
@@ -97,7 +96,7 @@ $$\text{Position} = \text{Long USD 100M Par 10Y Nominal} + \text{Short 10Y TIPS}
 
 ---
 
-### 5.4 Stress Testing & PnL Attribution Analytics
+### 4.4 Stress Testing & PnL Attribution Analytics
 
 | Scenario ID | Regime Description | $\Delta y_{\text{Nom}}$ | $\Delta y_{\text{TIPS}}$ | Delta PnL (USD) | Gamma PnL (USD) | Total Horizon PnL (USD) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -110,7 +109,7 @@ $$\text{Position} = \text{Long USD 100M Par 10Y Nominal} + \text{Short 10Y TIPS}
 
 ---
 
-### 5.5 10s30s Duration-Neutral Curve Box Structure
+### 4.5 10s30s Duration-Neutral Curve Box Structure
 
 $$\text{Position} = \text{Long 10Y Box (+USD 100M)} + \text{Short 30Y Box (-USD 33.37M)}$$
 
