@@ -1,6 +1,7 @@
 """
 Plotly visualization, dynamic conditioned reporting, and SR 11-7 narrative generator.
 """
+import base64
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -69,8 +70,8 @@ class DynamicDashboardInterpreter:
 
         p1_text = (
             f"* **Figure 1 (Zero Yield Term Structure & Macro Stance)**: The nominal curve trades **{nom_slope}** "
-            f"(2s10s spread: **{nom_2s10s:+.1f} bps**, spanning {nom_2y:.2f}% to {nom_30y:.2f}%), while the real TIPS curve "
-            f"exhibits a 2s10s slope of **{tips_2s10s:+.1f} bps** ({tips_2y:.2f}% to {tips_30y:.2f}%). "
+            f"(2s10s spread: **{nom_2s10s:+.1f} bps**, spanning {nom_2y:.2f}% to {nom_10y:.2f}%), while the real TIPS curve "
+            f"exhibits a 2s10s slope of **{tips_2s10s:+.1f} bps** ({tips_2y:.2f}% to {tips_10y:.2f}%). "
             f"Real yields are {real_stance}. Ten-year real rates are {sec_stag_desc}."
         )
 
@@ -208,7 +209,7 @@ class DynamicDashboardInterpreter:
         )
 
         return (
-            f"### 4.6 Quantitative Dashboard Figure Interpretation\n\n"
+            f"### 3. Quantitative Dashboard Figure Interpretation\n\n"
             f"{p1_text}\n\n{p2_text}\n\n{p3_text}\n\n{p4_text}\n\n{p5_text}\n\n{p6_text}\n"
         )
 
@@ -541,19 +542,21 @@ def render_macro_regime_history(
         title=dict(
             text="<b>U.S. Macro Regime: Nominal & Real Rate vs. Forward Breakeven Anchoring</b>",
             font=dict(size=17, color="#F8FAFC"),
-            x=0.05,
-            y=0.95,
+            x=0.04,
+            y=0.96,
             xanchor="left",
+            yanchor="top",
         ),
         template="plotly_dark",
-        height=650,
+        height=680,
         width=1100,
-        margin=dict(t=80, b=60, l=60, r=60),
+        margin=dict(t=100, b=120, l=65, r=65),
         legend=dict(
             orientation="h",
-            x=0.05,
-            y=0.88,
-            xanchor="left",
+            x=0.5,
+            y=-0.14,
+            xanchor="center",
+            yanchor="top",
             font=dict(size=11),
             bgcolor="rgba(15, 23, 42, 0.8)",
             bordercolor="rgba(148, 163, 184, 0.2)",
@@ -704,7 +707,6 @@ class MarkdownReportGenerator:
         md = f"""## U.S. RATES & BREAKEVEN INFLATION RESEARCH NOTE
 **Settlement Date:** {settle_date} | **Model:** Dual Nelson-Siegel Decomposition (D'Amico, Kim, and Wei (2018) Structural Accounting Framework)
 
-![Term Structure Dashboard](rates_dashboard.png)
 
 ### 1. Executive Summary & Market Context
 
@@ -751,12 +753,12 @@ calibrated via observable market liquidity proxies rather than the continuous-ti
 ---
 
 {dynamic_interpretations}
-
+![Term Structure Dashboard](rates_dashboard.png)
 ---
 
-## 5. Trade Sizing, Risk Sensitivity & Execution
+## 4. Trade Sizing, Risk Sensitivity & Execution
 
-### 5.1 Dynamic Trade Sizing (10Y Benchmark Box)
+### 4.1 Dynamic Trade Sizing (10Y Benchmark Box)
 $$\\text{{Position}} = \\text{{Long USD 100M Par 10Y Nominal}} + \\text{{Short 10Y TIPS}}$$
 
 | Metric | Nominal Leg | TIPS Hedged Leg | Net / Status |
@@ -768,7 +770,7 @@ $$\\text{{Position}} = \\text{{Long USD 100M Par 10Y Nominal}} + \\text{{Short 1
 
 ---
 
-### 5.2 Key Rate Duration (KRD) Bucket Decomposition (10Y Benchmark)
+### 4.2 Key Rate Duration (KRD) Bucket Decomposition (10Y Benchmark)
 
 | Key Tenor | 2Y Bucket | 5Y Bucket | 10Y Bucket | 30Y Bucket | Total Duration |
 | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -776,7 +778,7 @@ $$\\text{{Position}} = \\text{{Long USD 100M Par 10Y Nominal}} + \\text{{Short 1
 
 ---
 
-### 5.3 Regulatory Market Risk (FRTB / Basel III Standards)
+### 4.3 Regulatory Market Risk (FRTB / Basel III Standards)
 
 * **10-Day 99% Historical Simulation VaR**: USD {market_risk['VaR_99_10D_USD']:,.2f}
 * **10-Day 99% Expected Shortfall (ES)**: USD {market_risk['Expected_Shortfall_99_10D_USD']:,.2f}
@@ -787,7 +789,7 @@ $$\\text{{Position}} = \\text{{Long USD 100M Par 10Y Nominal}} + \\text{{Short 1
 
 ---
 
-### 5.4 Stress Testing & PnL Attribution Analytics
+### 4.4 Stress Testing & PnL Attribution Analytics
 
 | Scenario ID | Regime Description | $\\Delta y_{{\\text{{Nom}}}}$ | $\\Delta y_{{\\text{{TIPS}}}}$ | Delta PnL (USD) | Gamma PnL (USD) | Total Horizon PnL (USD) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
@@ -795,7 +797,7 @@ $$\\text{{Position}} = \\text{{Long USD 100M Par 10Y Nominal}} + \\text{{Short 1
 
 ---
 
-### 5.5 10s30s Duration-Neutral Curve Box Structure
+### 4.5 10s30s Duration-Neutral Curve Box Structure
 
 $$\\text{{Position}} = \\text{{Long 10Y Box (+USD 100M)}} + \\text{{Short 30Y Box (-USD {curve_box_30y['Leg2_Short_Nom_30Y_USD']/1e6:.2f}M)}}$$
 
