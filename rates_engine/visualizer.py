@@ -739,7 +739,7 @@ class MarkdownReportGenerator:
 3. **DKW (2018) Structural Liquidity Calibration**:
    * Base front-end wedge: {DKWEconometricPriors.BASE_FRONT_END_BPS:.2f} bps (decay half-life: {DKWEconometricPriors.DECAY_HORIZON_YEARS:.1f} yrs; floor: {DKWEconometricPriors.TERMINAL_FLOOR_BPS:.2f} bps).
    * Stress scalar sensitivity: $\\gamma = {DKWEconometricPriors.STRESS_SENSITIVITY:.2f}$ scaled against STLFSI4.
-4. **Numerical Stability**: Nominal basis condition number $\\kappa = {nom_diag['Basis_Condition_Number']:.2f}$; TIPS $\\kappa = {tips_diag['Basis_Condition_Number']:.2f}$ (well below the 30.0 threshold).
+4. **Numerical Stability**: Nominal basis condition number $\\kappa = {nom_diag['Basis_Condition_Number']:.2f}$; TIPS $\\kappa = {tips_diag['Basis_Condition_Number']:.2f}$.
 5. **Residual Precision**: Nominal RMSE = {nom_diag['RMSE_Bps']:.3f} bps; TIPS RMSE = {tips_diag['RMSE_Bps']:.3f} bps.
 6. **Reference Indexation**: Daily interpolated Ref CPI = {exec_params['Current_Ref_CPI']:.4f} ($CIF = {exec_params['CIF']:.4f}$).
 
